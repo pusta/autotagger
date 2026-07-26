@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+using System.Globalization;
 using Jellyfin.Plugin.AutoTagger.Configuration;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Plugins;
@@ -6,29 +9,46 @@ using MediaBrowser.Model.Serialization;
 
 namespace Jellyfin.Plugin.AutoTagger;
 
+/// <summary>
+/// The main plugin.
+/// </summary>
 public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Plugin"/> class.
+    /// </summary>
+    /// <param name="applicationPaths">Instance of the <see cref="IApplicationPaths"/> interface.</param>
+    /// <param name="xmlSerializer">Instance of the <see cref="IXmlSerializer"/> interface.</param>
     public Plugin(IApplicationPaths applicationPaths, IXmlSerializer xmlSerializer)
         : base(applicationPaths, xmlSerializer)
     {
         Instance = this;
     }
 
-    public static Plugin? Instance { get; private set; }
-
+    /// <inheritdoc />
     public override string Name => "Auto Tagger";
 
+    /// <inheritdoc />
     public override Guid Id => Guid.Parse("a9a34b1d-01e4-4156-8083-6cbd7dd86975");
 
-    public override string Description =>
-        "Applies configured tags to items as they are added to selected libraries.";
+    /// <inheritdoc />
+    public override string Description => "Applies configured tags to items as they are added to selected libraries.";
 
+    /// <summary>
+    /// Gets the current plugin instance.
+    /// </summary>
+    public static Plugin? Instance { get; private set; }
+
+    /// <inheritdoc />
     public IEnumerable<PluginPageInfo> GetPages()
     {
-        yield return new PluginPageInfo
-        {
-            Name = Name,
-            EmbeddedResourcePath = $"{GetType().Namespace}.Configuration.configPage.html"
-        };
+        return
+        [
+            new PluginPageInfo
+            {
+                Name = Name,
+                EmbeddedResourcePath = string.Format(CultureInfo.InvariantCulture, "{0}.Configuration.configPage.html", GetType().Namespace)
+            }
+        ];
     }
 }

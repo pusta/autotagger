@@ -1,3 +1,8 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Jellyfin.Plugin.AutoTagger.Configuration;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Movies;
@@ -16,6 +21,11 @@ public class Tagger
     private readonly ILibraryManager _libraryManager;
     private readonly ILogger<Tagger> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Tagger"/> class.
+    /// </summary>
+    /// <param name="libraryManager">Instance of the <see cref="ILibraryManager"/> interface.</param>
+    /// <param name="logger">Instance of the <see cref="ILogger{TCategoryName}"/> interface.</param>
     public Tagger(ILibraryManager libraryManager, ILogger<Tagger> logger)
     {
         _libraryManager = libraryManager;
@@ -23,24 +33,33 @@ public class Tagger
     }
 
     /// <summary>
-    /// Movies and series always qualify. Seasons and episodes are opt-in because
-    /// tagging every episode of a large series is a lot of database writes.
+    /// Determines whether an item is eligible for tagging. Movies and series always
+    /// qualify; seasons and episodes are opt-in because tagging every episode of a
+    /// large series is a lot of database writes.
     /// </summary>
-    public static bool IsTaggable(BaseItem item, PluginConfiguration config) => item switch
+    /// <param name="item">The item to test.</param>
+    /// <param name="configuration">The current plugin configuration.</param>
+    /// <returns><c>true</c> if the item should be considered for tagging.</returns>
+    public static bool IsTaggable(BaseItem item, PluginConfiguration configuration)
     {
-        Movie or Series => true,
-        Season or Episode => config.TagEpisodesAndSeasons,
-        _ => false
-    };
+        return item switch
+        {
+            Movie or Series => true,
+            Season or Episode => configuration.TagEpisodesAndSeasons,
+            _ => false
+        };
+    }
 
     /// <summary>
-    /// Resolves the tags configured for whichever libraries contain this item.
-    /// An item in two watched libraries gets the union of both rule sets.
+    /// Resolves the tags configured for whichever libraries contain the item.
+    /// An item present in two watched libraries receives the union of both rule sets.
     /// </summary>
+    /// <param name="item">The item to resolve tags for.</param>
+    /// <returns>The distinct tags configured for this item's libraries.</returns>
     public IReadOnlyList<string> GetConfiguredTags(BaseItem item)
     {
-        var config = Plugin.Instance?.Configuration;
-        if (config is null || config.Rules.Length == 0)
+        var configuration = Plugin.Instance?.Configuration;
+        if (configuration is null || configuration.Rules.Length == 0)
         {
             return [];
         }
@@ -51,9 +70,9 @@ public class Tagger
             return [];
         }
 
-        var libraryIds = containingLibraries.Select(f => f.Id).ToHashSet();
+        var libraryIds = containingLibraries.Select(folder => folder.Id).ToHashSet();
 
-        return config.Rules
+        return configuration.Rules
             .Where(rule => Guid.TryParse(rule.LibraryId, out var id) && libraryIds.Contains(id))
             .SelectMany(rule => rule.Tags)
             .Where(tag => !string.IsNullOrWhiteSpace(tag))
@@ -63,13 +82,16 @@ public class Tagger
     }
 
     /// <summary>
-    /// Applies the configured tags. Returns true if the item was written to.
-    /// Existing tags are preserved — this only ever adds.
+    /// Applies the configured tags to an item. Tagging is additive; existing tags
+    /// are never removed.
     /// </summary>
+    /// <param name="item">The item to tag.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns><c>true</c> if the item was written to the repository.</returns>
     public async Task<bool> ApplyAsync(BaseItem item, CancellationToken cancellationToken)
     {
-        var config = Plugin.Instance?.Configuration;
-        if (config is null || !IsTaggable(item, config))
+        var configuration = Plugin.Instance?.Configuration;
+        if (configuration is null || !IsTaggable(item, configuration))
         {
             return false;
         }
@@ -86,7 +108,7 @@ public class Tagger
             .ToArray();
 
         var lockedFields = item.LockedFields ?? [];
-        var needsLock = config.LockTags && !lockedFields.Contains(MetadataField.Tags);
+        var needsLock = configuration.LockTags && !lockedFields.Contains(MetadataField.Tags);
 
         if (missing.Length == 0 && !needsLock)
         {
