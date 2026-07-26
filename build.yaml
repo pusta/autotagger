@@ -1,0 +1,17 @@
+---
+name: "Auto Tagger"
+guid: "a9a34b1d-01e4-4156-8083-6cbd7dd86975"
+version: "1.0.0.0"
+targetAbi: "10.11.0.0"
+framework: "net9.0"
+owner: "yourname"
+overview: "Auto-tag new media by library"
+description: >
+  Applies configured tags to items as they are added to selected libraries.
+  Useful for tag-based parental controls, where a user policy allows or blocks
+  content by tag.
+category: "Metadata"
+artifacts:
+  - "Jellyfin.Plugin.AutoTagger.dll"
+changelog: >
+  Initial release.
