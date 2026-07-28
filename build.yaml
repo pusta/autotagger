@@ -1,6 +1,7 @@
 ---
 name: "Auto Tagger"
 guid: "a9a34b1d-01e4-4156-8083-6cbd7dd86975"
+image: "image.png"
 version: "1.0.0.0"
 targetAbi: "10.11.0.0"
 framework: "net9.0"
