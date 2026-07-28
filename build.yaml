@@ -11,7 +11,7 @@ description: >
   Intended for tag-based parental controls, where a user policy allows or
   blocks content by tag.
 category: "General"
-owner: "yourname"
+owner: "pusta"
 artifacts:
 - "Jellyfin.Plugin.AutoTagger.dll"
 changelog: >
