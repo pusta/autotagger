@@ -15,4 +15,4 @@ owner: "pusta"
 artifacts:
 - "Jellyfin.Plugin.AutoTagger.dll"
 changelog: >
-  Initial release.
+  Updated plug-in icon
