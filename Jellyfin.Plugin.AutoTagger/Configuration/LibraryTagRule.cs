@@ -15,6 +15,7 @@ public class LibraryTagRule
         LibraryId = string.Empty;
         LibraryName = string.Empty;
         Tags = [];
+        ExcludeTags = [];
     }
 
     /// <summary>
@@ -31,6 +32,6 @@ public class LibraryTagRule
     /// <summary>
     /// Gets or sets the tags to apply. Comparison is case-insensitive.
     /// </summary>
-    [SuppressMessage("Performance", "CA1819:Properties should not return arrays", Justification = "Plugin configuration is round-tripped through XmlSerializer, which requires a settable array.")]
     public string[] Tags { get; set; }
+    public string[] ExcludeTags { get; set; }
 }
