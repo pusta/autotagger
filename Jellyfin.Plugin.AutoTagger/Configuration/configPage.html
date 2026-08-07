@@ -13,7 +13,10 @@
                         <h2 class="sectionTitle">Tags by library</h2>
                         <div class="fieldDescription" style="margin-bottom:1.5em;">
                             Enter the tags to apply to items added to each library, separated by commas.
-                            Leave a library empty to skip it. Existing tags are never removed.
+                            Leave a library's tags empty to skip it. Existing tags are never removed.
+                            If an item already carries one of a library's skip tags, that library's tags
+                            are not applied to it. Note that listing a tag in both boxes makes the library
+                            tag its items once and then leave them alone.
                         </div>
                         <div id="LibraryList">
                             <div class="fieldDescription">Loading libraries&hellip;</div>
@@ -64,7 +67,15 @@
                         .replace(/>/g, '&gt;');
                 },
 
-                renderLibraries: function (folders, tagsByLibraryId) {
+                parseTags: function (value) {
+                    return value.split(',').map(function (tag) {
+                        return tag.trim();
+                    }).filter(function (tag) {
+                        return tag.length > 0;
+                    });
+                },
+
+                renderLibraries: function (folders, rulesByLibraryId) {
                     if (!folders.length) {
                         return '<div class="fieldDescription">No libraries found. Add a library first.</div>';
                     }
@@ -72,13 +83,24 @@
                     return folders.map(function (folder) {
                         var id = AutoTaggerConfig.escapeAttribute(folder.ItemId);
                         var name = AutoTaggerConfig.escapeAttribute(folder.Name);
-                        var value = AutoTaggerConfig.escapeAttribute(tagsByLibraryId[folder.ItemId] || '');
+                        var rule = rulesByLibraryId[folder.ItemId] || {};
+                        var tags = AutoTaggerConfig.escapeAttribute(rule.tags || '');
+                        var excludeTags = AutoTaggerConfig.escapeAttribute(rule.excludeTags || '');
 
-                        return '<div class="inputContainer">'
-                            + '<label class="inputLabel inputLabelUnfocused" for="lib_' + id + '">' + name + '</label>'
-                            + '<input id="lib_' + id + '" type="text" is="emby-input" class="autoTaggerLibraryInput"'
-                            + ' data-libraryid="' + id + '" data-libraryname="' + name + '"'
-                            + ' value="' + value + '" placeholder="e.g. kids-ok, preschool" />'
+                        return '<div class="autoTaggerLibrary" style="margin-bottom:1.5em;"'
+                            + ' data-libraryid="' + id + '" data-libraryname="' + name + '">'
+                            + '<h3 class="checkboxListLabel">' + name + '</h3>'
+                            + '<div class="inputContainer">'
+                            + '<label class="inputLabel inputLabelUnfocused" for="lib_' + id + '">Tags to apply</label>'
+                            + '<input id="lib_' + id + '" type="text" is="emby-input" class="autoTaggerTagsInput"'
+                            + ' value="' + tags + '" placeholder="e.g. kids-ok, preschool" />'
+                            + '</div>'
+                            + '<div class="inputContainer">'
+                            + '<label class="inputLabel inputLabelUnfocused" for="exclude_' + id + '">Skip items already tagged</label>'
+                            + '<input id="exclude_' + id + '" type="text" is="emby-input" class="autoTaggerExcludeInput"'
+                            + ' value="' + excludeTags + '" placeholder="e.g. manual-review" />'
+                            + '<div class="fieldDescription">Leave empty to tag everything in this library.</div>'
+                            + '</div>'
                             + '</div>';
                     }).join('');
                 }
@@ -94,13 +116,16 @@
                         var config = results[0];
                         var folders = results[1] || [];
 
-                        var tagsByLibraryId = {};
+                        var rulesByLibraryId = {};
                         (config.Rules || []).forEach(function (rule) {
-                            tagsByLibraryId[rule.LibraryId] = (rule.Tags || []).join(', ');
+                            rulesByLibraryId[rule.LibraryId] = {
+                                tags: (rule.Tags || []).join(', '),
+                                excludeTags: (rule.ExcludeTags || []).join(', ')
+                            };
                         });
 
                         document.querySelector('#LibraryList').innerHTML =
-                            AutoTaggerConfig.renderLibraries(folders, tagsByLibraryId);
+                            AutoTaggerConfig.renderLibraries(folders, rulesByLibraryId);
                         document.querySelector('#TagEpisodesAndSeasons').checked = config.TagEpisodesAndSeasons;
                         document.querySelector('#LockTags').checked = config.LockTags;
 
@@ -116,19 +141,19 @@
                 .addEventListener('submit', function (e) {
                 Dashboard.showLoadingMsg();
                 ApiClient.getPluginConfiguration(AutoTaggerConfig.pluginUniqueId).then(function (config) {
-                    var inputs = document.querySelectorAll('.autoTaggerLibraryInput');
+                    var libraries = document.querySelectorAll('.autoTaggerLibrary');
 
-                    config.Rules = Array.prototype.map.call(inputs, function (input) {
+                    config.Rules = Array.prototype.map.call(libraries, function (library) {
                         return {
-                            LibraryId: input.getAttribute('data-libraryid'),
-                            LibraryName: input.getAttribute('data-libraryname'),
-                            Tags: input.value.split(',').map(function (tag) {
-                                return tag.trim();
-                            }).filter(function (tag) {
-                                return tag.length > 0;
-                            })
+                            LibraryId: library.getAttribute('data-libraryid'),
+                            LibraryName: library.getAttribute('data-libraryname'),
+                            Tags: AutoTaggerConfig.parseTags(
+                                library.querySelector('.autoTaggerTagsInput').value),
+                            ExcludeTags: AutoTaggerConfig.parseTags(
+                                library.querySelector('.autoTaggerExcludeInput').value)
                         };
                     }).filter(function (rule) {
+                        // A library with no tags to apply has nothing to exclude from.
                         return rule.Tags.length > 0;
                     });
 

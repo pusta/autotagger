@@ -53,10 +53,29 @@ public class Tagger
     /// <summary>
     /// Resolves the tags configured for whichever libraries contain the item.
     /// An item present in two watched libraries receives the union of both rule sets.
+    /// A rule whose exclusions match one of the item's existing tags contributes nothing;
+    /// the other libraries' rules still apply.
     /// </summary>
     /// <param name="item">The item to resolve tags for.</param>
+    /// <param name="existingTags">The tags the item already carries, used to evaluate exclusions.</param>
     /// <returns>The distinct tags configured for this item's libraries.</returns>
-    public IReadOnlyList<string> GetConfiguredTags(BaseItem item)
+    public IReadOnlyList<string> GetConfiguredTags(BaseItem item, IReadOnlyList<string> existingTags)
+    {
+        return GetMatchingRules(item)
+            .Where(rule => !IsExcluded(rule, existingTags))
+            .SelectMany(rule => rule.Tags)
+            .Where(tag => !string.IsNullOrWhiteSpace(tag))
+            .Select(tag => tag.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+    }
+
+    /// <summary>
+    /// Finds the configured rules whose library contains the item.
+    /// </summary>
+    /// <param name="item">The item to match rules against.</param>
+    /// <returns>The matching rules, or an empty array if none apply.</returns>
+    private LibraryTagRule[] GetMatchingRules(BaseItem item)
     {
         var configuration = Plugin.Instance?.Configuration;
         if (configuration is null || configuration.Rules.Length == 0)
@@ -74,16 +93,34 @@ public class Tagger
 
         return configuration.Rules
             .Where(rule => Guid.TryParse(rule.LibraryId, out var id) && libraryIds.Contains(id))
-            .SelectMany(rule => rule.Tags)
-            .Where(tag => !string.IsNullOrWhiteSpace(tag))
-            .Select(tag => tag.Trim())
-            .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
     }
 
     /// <summary>
+    /// Tests whether an item's existing tags suppress a rule. An empty exclusion list
+    /// never suppresses.
+    /// </summary>
+    /// <param name="rule">The rule to test.</param>
+    /// <param name="existingTags">The tags the item already carries.</param>
+    /// <returns><c>true</c> if the rule should be skipped for this item.</returns>
+    private static bool IsExcluded(LibraryTagRule rule, IReadOnlyList<string> existingTags)
+    {
+        var exclusions = rule.ExcludeTags;
+        if (exclusions is null || exclusions.Length == 0 || existingTags.Count == 0)
+        {
+            return false;
+        }
+
+        return exclusions
+            .Where(tag => !string.IsNullOrWhiteSpace(tag))
+            .Select(tag => tag.Trim())
+            .Any(tag => existingTags.Contains(tag, StringComparer.OrdinalIgnoreCase));
+    }
+
+    /// <summary>
     /// Applies the configured tags to an item. Tagging is additive; existing tags
-    /// are never removed.
+    /// are never removed. An item excluded by every matching rule is left untouched,
+    /// including its lock state.
     /// </summary>
     /// <param name="item">The item to tag.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
@@ -96,13 +133,16 @@ public class Tagger
             return false;
         }
 
-        var wanted = GetConfiguredTags(item);
+        // Exclusions are evaluated against the tags the item carries on entry, so the
+        // order in which rules are applied cannot change the outcome.
+        var existing = item.Tags ?? [];
+
+        var wanted = GetConfiguredTags(item, existing);
         if (wanted.Count == 0)
         {
             return false;
         }
 
-        var existing = item.Tags ?? [];
         var missing = wanted
             .Where(tag => !existing.Contains(tag, StringComparer.OrdinalIgnoreCase))
             .ToArray();

@@ -15,6 +15,7 @@ public class LibraryTagRule
         LibraryId = string.Empty;
         LibraryName = string.Empty;
         Tags = [];
+        ExcludeTags = [];
     }
 
     /// <summary>
@@ -33,4 +34,11 @@ public class LibraryTagRule
     /// </summary>
     [SuppressMessage("Performance", "CA1819:Properties should not return arrays", Justification = "Plugin configuration is round-tripped through XmlSerializer, which requires a settable array.")]
     public string[] Tags { get; set; }
+
+    /// <summary>
+    /// Gets or sets the tags that suppress this rule. If an item already carries any of
+    /// these tags, this library's tags are not applied to it. Comparison is case-insensitive.
+    /// </summary>
+    [SuppressMessage("Performance", "CA1819:Properties should not return arrays", Justification = "Plugin configuration is round-tripped through XmlSerializer, which requires a settable array.")]
+    public string[] ExcludeTags { get; set; }
 }
