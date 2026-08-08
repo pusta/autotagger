@@ -1,34 +1,64 @@
 # Jellyfin Auto Tagger
 
-Applies configured tags to media as it is added to selected libraries.
+Automatically tags media as it's added to a library.
 
-Intended for tag-based parental controls: map a library to a tag, then use that tag in each
-user's **Allowed tags** / **Blocked tags** policy.
+Pick a library, pick the tags you want applied to everything in it, and Auto Tagger handles the rest as new media arrives. This pairs well with Jellyfin's built-in parental controls: tag a library, then set that tag under a user's **Allowed tags** or **Blocked tags** and their access follows the library without any manual upkeep.
 
-Built from the [official plugin template](https://github.com/jellyfin/jellyfin-plugin-template).
+Tags are only ever added. Anything already on an item stays put.
 
-## Configuration
+## Install
 
-**Dashboard → Plugins → Auto Tagger.** Every library is listed with a text field; enter
-comma-separated tags, or leave a library blank to skip it. Tagging is additive — existing
-tags are never removed.
+Add this repository to Jellyfin:
 
-New items are tagged as they arrive. To tag items already in a library, run **Apply
-auto-tags to existing items** from Dashboard → Scheduled Tasks.
+**Dashboard → Plugins → Repositories → +**
 
-## Building
+```
+https://pusta.github.io/jellyfin-plugins/manifest.json
+```
+
+Then go to **Catalog**, find **Auto Tagger**, and install it. Restart Jellyfin when prompted.
+
+## Setup
+
+**Dashboard → Plugins → Auto Tagger**
+
+Every library on your server is listed with a text box. Type the tags you want applied to that library, separated by commas. Leave a library blank and it's ignored.
+
+```
+Kids Movies     →  kids-ok, preschool
+Family TV       →  kids-ok
+Movies          →
+```
+
+Two options at the bottom:
+
+**Also tag seasons and episodes.** Off by default, so only movies and series get tagged. Turn this on if you find that blocking a series by tag doesn't hide its individual episodes. It works, but it writes a tag to every episode, which takes a while on a large library.
+
+**Lock the Tags field after tagging.** On by default. This stops a metadata refresh from wiping the tags back off. The tradeoff is that you can't edit tags by hand in the Jellyfin UI until you unlock the field on that item.
+
+Save, and new media gets tagged from then on.
+
+## Tagging what's already there
+
+The plugin only sees media as it's added, so anything already in your libraries won't have tags yet. To catch those up:
+
+**Dashboard → Scheduled Tasks → Apply auto-tags to existing items → Run**
+
+Progress shows in the dashboard. It's a one-time thing after you set up your rules, though it's safe to run again whenever.
+
+## Notes
+
+Tagging isn't instant. New items go into a queue behind whatever else the library scan is doing, so give it a minute before assuming something's wrong. The Jellyfin log shows a line for each item tagged if you want to watch it happen.
+
+Requires Jellyfin 10.11.x. Older versions need a build against their own SDK.
+
+## Building from source
 
 ```bash
 dotnet publish --configuration=Release Jellyfin.Plugin.AutoTagger.sln
 ```
 
-For local development, the template's VS Code tasks are included: set `jellyfinDir`,
-`jellyfinWebDir`, and the data directory in `.vscode/settings.json`, then run the
-**build-and-copy** task to build and drop the DLL straight into your server's plugin
-directory.
-
-To install manually, copy `Jellyfin.Plugin.AutoTagger.dll` into a folder under your
-plugins directory:
+Drop `Jellyfin.Plugin.AutoTagger.dll` into a subfolder of your plugins directory and restart:
 
 | Platform | Path |
 | --- | --- |
@@ -36,60 +66,8 @@ plugins directory:
 | Linux | `/var/lib/jellyfin/plugins/AutoTagger/` |
 | Windows | `%ProgramData%\Jellyfin\Server\plugins\AutoTagger\` |
 
-For a packaged release with a repository manifest, use [jprm](https://github.com/jellyfin/jprm)
-against `build.yaml`.
-
-## Version matching
-
-The `Jellyfin.Controller` / `Jellyfin.Model` versions in the csproj **must match your server
-version** or the plugin loads as `NotSupported`.
-
-| Server | TargetFramework | Package version |
-| --- | --- | --- |
-| 10.11.x | `net9.0` | `10.11.x` |
-| 10.10.x | `net8.0` | `10.10.x` |
-
-Note that the upstream template still pins `10.9.11`; this project bumps to `10.11.11`.
-
-Jellyfin 12.0 is in release candidate and drops the leading `10.`. It is an ABI break — the
-12.0 RC notes tell users to reinstall plugins from the unstable repository. Expect to rebuild
-against the 12.0 packages when it ships.
-
-## How it works
-
-- `AutoTagService` is an `IHostedService` subscribed to `ILibraryManager.ItemAdded`.
-  (`IServerEntryPoint` was replaced in 10.9 — older tutorials showing it will not work.)
-- `Tagger` resolves an item's libraries via `ILibraryManager.GetCollectionFolders`, unions
-  the tags from every matching rule, and writes with `UpdateToRepositoryAsync`.
-- `ApplyTagsTask` is a manual scheduled task that backfills existing items.
-- `PluginServiceRegistrator` wires both into the host container.
-
-## Things to verify on your server
-
-**Whether episodes inherit series tags for blocking.** This is the crux of the parental
-control use case and is worth testing directly rather than assuming: tag a series, log in as
-a restricted user, and check whether individual episodes are hidden. If they are not, enable
-**Also tag seasons and episodes** — but that writes one row per episode.
-
-**Metadata refresh behaviour.** `LockTags` defaults to on because a refresh with "replace
-existing metadata" can otherwise clear the Tags field. A locked field cannot be edited from
-the UI until it is unlocked.
-
-**ItemAdded timing.** The event fires when the item record is created, which can precede the
-metadata provider finishing. If tags occasionally do not stick, the next step is to also
-implement `ILibraryPostScanTask` and re-apply after each scan.
-
-## Notes on the analyzers
-
-The template sets `TreatWarningsAsErrors` with `AnalysisMode=AllEnabledByDefault`, so a few
-things are not optional:
-
-- every public type and member needs an XML doc comment (`GenerateDocumentationFile` is on)
-- no `ImplicitUsings` — `using` directives are explicit, `System` first, alphabetised
-- one class per file (StyleCop SA1402), which is why `LibraryTagRule` has its own file
-- `CA1819` is suppressed on the array-typed configuration properties, since `XmlSerializer`
-  requires settable arrays
+The `Jellyfin.Controller` and `Jellyfin.Model` versions in the csproj have to match your server, or the plugin shows up as `NotSupported` and won't load.
 
 ## License
 
-GPL-3.0, inherited from the template.
+GPL-3.0
