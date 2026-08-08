@@ -49,7 +49,9 @@ Progress shows in the dashboard. It's a one-time process after you set up your r
 
 Tagging isn't instant. New items go into a queue behind whatever else the library scan is doing, so give it a minute before assuming something's wrong. The Jellyfin log shows a line for each item tagged if you want to watch it happen.
 
-Requires Jellyfin 10.11.x. Older versions need a build against their own SDK.
+## Platforms
+
+[![Jellyfin](https://img.shields.io/static/v1?color=%2300A4DC&style=for-the-badge&label=Jellyfin&logo=jellyfin&message=10.11.x)](https://jellyfin.org/)
 
 ## Building from source
 
