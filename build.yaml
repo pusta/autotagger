@@ -16,4 +16,4 @@ artifacts:
 - "Jellyfin.Plugin.AutoTagger.dll"
 changelog: >
   1.1.0.0 - New: Ignore tagging items that have a specified tag already applied.
-  1.0.0.1 - Updated plug-in icon
+  
