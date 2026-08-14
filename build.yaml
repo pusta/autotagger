@@ -2,7 +2,7 @@
 name: "Auto Tagger"
 guid: "a9a34b1d-01e4-4156-8083-6cbd7dd86975"
 image: "image.png"
-version: "1.1.0.0"
+version: "1.1.0.1"
 targetAbi: "10.11.0.0"
 framework: "net9.0"
 overview: "Auto-tag new media by library"
@@ -15,5 +15,5 @@ owner: "pusta"
 artifacts:
 - "Jellyfin.Plugin.AutoTagger.dll"
 changelog: >
-  1.1.0.0 - New: Ignore tagging items that have a specified tag already applied.
+  1.1.0.1 - New: Created a dedicated category for ScheduledTasks
   

@@ -48,7 +48,7 @@ public class ApplyTagsTask : IScheduledTask
     public string Description => "Tags items already present in the watched libraries.";
 
     /// <inheritdoc />
-    public string Category => "Library";
+    public string Category => "AutoTagger";
 
     /// <inheritdoc />
     public IEnumerable<TaskTriggerInfo> GetDefaultTriggers()
