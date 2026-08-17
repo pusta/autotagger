@@ -34,7 +34,7 @@ Two additional options:
 
 **Also tag seasons and episodes.** Off by default, so only movies and series get tagged. Turn this on if you find that blocking a series by tag doesn't hide its individual episodes. This will take a long time to tag every epiosde in larger libraries.
 
-**Lock the Tags field after tagging.** On by default. This stops a metadata refresh from wiping the tags back off. The tradeoff is that you can't edit tags by hand in the Jellyfin UI until you unlock the field on that item.
+**Lock the Tags field after tagging.** Off by default, and best left that way. Locking stops a metadata refresh from wiping the tags back off, but Jellyfin skips a locked field entirely when it merges metadata, so the item keeps the tags configured here and gains none of the tags its metadata source would have supplied. You also can't edit tags by hand in the Jellyfin UI until you unlock the field on that item. Leaving it off is safe: provider tags are merged with the configured ones rather than replacing them, and the configured tags are re-applied after any refresh that does replace them.
 
 
 ## Tagging what's already there

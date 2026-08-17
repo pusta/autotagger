@@ -2,7 +2,7 @@
 name: "Auto Tagger"
 guid: "a9a34b1d-01e4-4156-8083-6cbd7dd86975"
 image: "image.png"
-version: "1.1.0.1"
+version: "1.1.0.2"
 targetAbi: "10.11.0.0"
 framework: "net9.0"
 overview: "Auto-tag new media by library"
@@ -15,5 +15,8 @@ owner: "pusta"
 artifacts:
 - "Jellyfin.Plugin.AutoTagger.dll"
 changelog: >
-  1.1.0.1 - New: Created a dedicated category for ScheduledTasks
+  1.1.0.2 - Fix: Locking the Tags field on import stopped the metadata providers writing any
+  tags of their own. The lock is no longer taken before metadata is fetched, tags are
+  re-applied after a refresh, and the option now defaults to off.
+
   

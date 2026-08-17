@@ -15,7 +15,7 @@ public class PluginConfiguration : BasePluginConfiguration
     {
         Rules = [];
         TagEpisodesAndSeasons = false;
-        LockTags = true;
+        LockTags = false;
     }
 
     /// <summary>
@@ -32,7 +32,11 @@ public class PluginConfiguration : BasePluginConfiguration
 
     /// <summary>
     /// Gets or sets a value indicating whether the Tags metadata field is locked after
-    /// tagging, so that a later metadata refresh cannot clear it.
+    /// tagging, so that a later metadata refresh cannot clear it. Off by default: a locked
+    /// field is skipped entirely by the metadata providers, so the item keeps the configured
+    /// tags and gains no others. Leaving it unlocked is safe because tags from a provider are
+    /// merged rather than replaced, and the configured tags are re-applied after any refresh
+    /// that does replace them.
     /// </summary>
     public bool LockTags { get; set; }
 }

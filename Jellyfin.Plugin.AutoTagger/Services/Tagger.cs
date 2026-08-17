@@ -123,9 +123,15 @@ public class Tagger
     /// including its lock state.
     /// </summary>
     /// <param name="item">The item to tag.</param>
+    /// <param name="metadataSettled">
+    /// Whether the metadata providers have finished with this item. Locking the Tags field
+    /// stops the providers writing to it at all, so the lock must never be taken on the
+    /// ItemAdded path: that fires before the first refresh and would cost the item every
+    /// tag its metadata source would have supplied.
+    /// </param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns><c>true</c> if the item was written to the repository.</returns>
-    public async Task<bool> ApplyAsync(BaseItem item, CancellationToken cancellationToken)
+    public async Task<bool> ApplyAsync(BaseItem item, bool metadataSettled, CancellationToken cancellationToken)
     {
         var configuration = Plugin.Instance?.Configuration;
         if (configuration is null || !IsTaggable(item, configuration))
@@ -148,7 +154,9 @@ public class Tagger
             .ToArray();
 
         var lockedFields = item.LockedFields ?? [];
-        var needsLock = configuration.LockTags && !lockedFields.Contains(MetadataField.Tags);
+        var needsLock = configuration.LockTags
+            && metadataSettled
+            && !lockedFields.Contains(MetadataField.Tags);
 
         if (missing.Length == 0 && !needsLock)
         {
