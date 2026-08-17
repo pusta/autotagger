@@ -103,7 +103,9 @@ public class ApplyTagsTask : IScheduledTask
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                if (await _tagger.ApplyAsync(items[j], cancellationToken).ConfigureAwait(false))
+                // These items are already in the library, so their metadata has been fetched
+                // and locking the Tags field costs nothing the providers were going to add.
+                if (await _tagger.ApplyAsync(items[j], true, cancellationToken).ConfigureAwait(false))
                 {
                     tagged++;
                 }

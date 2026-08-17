@@ -39,7 +39,11 @@
                                 <span>Lock the Tags field after tagging</span>
                             </label>
                             <div class="fieldDescription checkboxFieldDescription">
-                                Stops a later metadata refresh from clearing the tags. Recommended.
+                                Not recommended. A locked Tags field is skipped by the metadata
+                                providers, so the item keeps the tags configured here and gains no
+                                others. Leave this off: provider tags are merged rather than
+                                replaced, and the configured tags are re-applied after any refresh
+                                that does replace them.
                             </div>
                         </div>
                     </div>
