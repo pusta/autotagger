@@ -94,10 +94,13 @@ public class ApplyTagsTask : IScheduledTask
                 IncludeItemTypes = [.. kinds]
             });
 
-            _logger.LogInformation(
-                "Checking {ItemCount} items in {LibraryName}",
-                items.Count,
-                rules[i].LibraryName);
+            if (_logger.IsEnabled(LogLevel.Information))
+            {
+                _logger.LogInformation(
+                    "Checking {ItemCount} items in {LibraryName}",
+                    items.Count,
+                    rules[i].LibraryName);
+            }
 
             for (var j = 0; j < items.Count; j++)
             {
@@ -118,7 +121,11 @@ public class ApplyTagsTask : IScheduledTask
             }
         }
 
-        _logger.LogInformation("Auto Tagger updated {TaggedCount} of {ProcessedCount} items", tagged, processed);
+        if (_logger.IsEnabled(LogLevel.Information))
+        {
+            _logger.LogInformation("Auto Tagger updated {TaggedCount} of {ProcessedCount} items", tagged, processed);
+        }
+
         progress.Report(100);
     }
 }

@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>Jellyfin.Plugin.AutoTagger</RootNamespace>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
@@ -12,16 +12,16 @@
 
   <!--
     These versions must match the Jellyfin server you are running, or the plugin
-    loads as "NotSupported". The upstream template still pins 10.9.11; bumped here
-    to the current 10.11 stable line.
+    loads as "NotSupported". 
+      Jellyfin 12.0.x -> net10.0, packages 12.0.x
       Jellyfin 10.11.x -> net9.0, packages 10.11.x
       Jellyfin 10.10.x -> net8.0, packages 10.10.x
   -->
   <ItemGroup>
-    <PackageReference Include="Jellyfin.Controller" Version="10.11.11">
+    <PackageReference Include="Jellyfin.Controller" Version="12.0.0">
       <ExcludeAssets>runtime</ExcludeAssets>
     </PackageReference>
-    <PackageReference Include="Jellyfin.Model" Version="10.11.11">
+    <PackageReference Include="Jellyfin.Model" Version="12.0.0">
       <ExcludeAssets>runtime</ExcludeAssets>
     </PackageReference>
   </ItemGroup>
