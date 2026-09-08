@@ -176,11 +176,14 @@ public class Tagger
         await item.UpdateToRepositoryAsync(ItemUpdateType.MetadataEdit, cancellationToken)
             .ConfigureAwait(false);
 
-        _logger.LogInformation(
-            "Tagged {ItemName} ({ItemType}) with [{Tags}]",
-            item.Name,
-            item.GetType().Name,
-            string.Join(", ", missing));
+        if (_logger.IsEnabled(LogLevel.Information))
+        {
+            _logger.LogInformation(
+                "Tagged {ItemName} ({ItemType}) with [{Tags}]",
+                item.Name,
+                item.GetType().Name,
+                string.Join(", ", missing));
+        }
 
         return true;
     }
